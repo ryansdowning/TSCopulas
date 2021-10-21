@@ -28,7 +28,7 @@ jobs:
       name: Deploy to GitHub Pages
       if: (NOT type IN (pull_request)) AND (branch = master) # only deploy if merging on master
       script:
-              - poetry run sphinx-apidoc -o docs/ -f tscopulas/
+        - poetry run sphinx-apidoc -o docs/ -f tscopulas/
         - cd docs && poetry run make html && cd ..
       deploy:
         provider: pages # deploy on github pages
