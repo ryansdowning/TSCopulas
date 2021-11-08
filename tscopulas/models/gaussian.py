@@ -35,9 +35,7 @@ class Gaussian:
         # Generate 2D dataframe of lagged variables
         lagged_data = pd.DataFrame()
         for i in range(self.max_lag + 1):
-            temp = pd.DataFrame(
-                lagged_2d[..., i], columns=[f"{j}_lagged_{i}" for j in data.columns]
-            )
+            temp = pd.DataFrame(lagged_2d[..., i], columns=[f"{j}_lagged_{i}" for j in data.columns])
             lagged_data = pd.concat([lagged_data, temp], axis=1)
 
         # Apply NaN Filter
@@ -48,6 +46,8 @@ class Gaussian:
         """
         Transform data to lagged dataframe and fit Multivariate Gaussian on lagged variables
         """
+        if self._is_fit:
+            return
         self.model.fit(self.transform_data)
         self._is_fit = True
 
@@ -97,13 +97,9 @@ class Gaussian:
                 f", i.e. Gaussian(data, max_lag={self.max_lag})"
             )
 
-        samples = pd.DataFrame(
-            index=range(1, lag + 1), columns=self.transform_data.columns
-        )
+        samples = pd.DataFrame(index=range(1, lag + 1), columns=self.transform_data.columns)
         for i in range(lag):
             conditional = f"{cond_col}_lagged_{i}"
-            new_sample = self.model.sample(
-                1, conditions={conditional: self.transform_data[conditional].iloc[-1]}
-            )
+            new_sample = self.model.sample(1, conditions={conditional: self.transform_data[conditional].iloc[-1]})
             samples.iloc[i, :] = new_sample.iloc[0, :]
         return samples
