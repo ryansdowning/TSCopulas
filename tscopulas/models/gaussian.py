@@ -1,5 +1,5 @@
 import pandas as pd
-from copulas.multivariate import GaussianMultivariate
+from copulas import multivariate
 
 from tscopulas.preprocessing import lag_transform as lt
 
@@ -7,16 +7,16 @@ from tscopulas.preprocessing import lag_transform as lt
 class Gaussian:
     """Gaussian copula model modified to work with time series applications"""
 
-    def __init__(self, data, max_lag):
+    def __init__(self, data: pd.DataFrame, max_lag: int):
         """
         Args:
             data:
             max_lag:
         """
-        self.model = GaussianMultivariate()
+        self.model = multivariate.GaussianMultivariate()
         self.data = data
-        self.transform_data = self.transform(self.data)
         self.max_lag = max_lag
+        self.transform_data = self.transform(self.data)
         self._is_fit = False
 
     def transform(self, data):
@@ -24,7 +24,7 @@ class Gaussian:
         Applies lag transform to data passed in given max_lag
 
         Args:
-            data:
+            data: pd.DataFrame
 
         Returns:
             2D pd.DataFrame of transformed data with lag variables as columns
@@ -51,7 +51,7 @@ class Gaussian:
         self.model.fit(self.transform_data)
         self._is_fit = True
 
-    def sample(self, num_samples, cond_col, cond_lag):
+    def sample(self, num_samples: int, cond_col, cond_lag: int):
         """
         Generate num_samples new samples of data given cond_col lagged by cond_lag time units
         is equal to most recently seen observation of variable (sequentiality concept)
@@ -96,6 +96,9 @@ class Gaussian:
                 f"This model has a max lag of {self.max_lag}. Please create a new model with max lag >= {self.max_lag}"
                 f", i.e. Gaussian(data, max_lag={self.max_lag})"
             )
+
+        if not self._is_fit:
+            raise ValueError("Please fit model on data")
 
         samples = pd.DataFrame(index=range(1, lag + 1), columns=self.transform_data.columns)
         for i in range(lag):

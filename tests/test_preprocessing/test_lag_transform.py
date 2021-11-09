@@ -1,5 +1,5 @@
-import pytest
 import numpy as np
+import pytest
 
 from tscopulas.preprocessing import lag_transform as lt
 
@@ -13,7 +13,7 @@ def test_1d_apply_lag_transform():
     np.testing.assert_array_equal(out[..., 1:, 1], arr[:-1])
     np.testing.assert_array_equal(out[..., 2:, 2], arr[:-2])
     np.testing.assert_array_equal(out[..., 3:, 3], arr[:-3])
-    
+
     out = lt.apply_lag_transform(arr, 3, axis=-1)
 
     assert out.shape == (10, 4)
