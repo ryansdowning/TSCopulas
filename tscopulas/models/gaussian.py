@@ -10,8 +10,10 @@ class Gaussian:
     def __init__(self, data: pd.DataFrame, max_lag: int):
         """
         Args:
-            data:
-            max_lag:
+            data: A pandas dataframe of time series data that will be used to model time dependent relations between
+                  variables (columns)
+            max_lag: The maximum offset to form relationships for, note this is a cartesian product of the variables
+                     meaning that the data to fit on grows by a factor of <max_lag>
         """
         self.model = multivariate.GaussianMultivariate()
         self.data = data
@@ -45,7 +47,10 @@ class Gaussian:
     def fit(self):
         """
         Transform data to lagged dataframe and fit Multivariate Gaussian on lagged variables
+
+        Marks the model as fitted
         """
+        # Do not need to fit model again if already fitted, data does not change
         if self._is_fit:
             return
         self.model.fit(self.transform_data)
@@ -59,9 +64,9 @@ class Gaussian:
         In order to generate data from current-day lag variable, set cond_lag=0
 
         Args:
-            num_samples:
-            cond_col:
-            cond_lag:
+            num_samples: Integer, number of samples to generate
+            cond_col: The name of the column to condition on
+            cond_lag: The offset to condition on for the selected column
 
         Returns:
              new sample row
@@ -85,10 +90,12 @@ class Gaussian:
         of chosen conditional feature/column
 
         Args:
-            cond_col:
-            lag:
+            cond_col: Name of the column to condition on
+            lag: The number of offsets to use for conditioning on the selected column
 
         Returns:
+            Pandas dataframe of <lag> number of rows where each row represents the sample of all other columns given
+            conditioned on the selected column's previous value, rolling
         """
         # Need new fit a new model if on larger lag
         if lag > self.max_lag:
