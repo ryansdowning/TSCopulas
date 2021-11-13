@@ -1,6 +1,7 @@
-import pytest
 import string
+
 import numpy as np
+import pytest
 
 from tscopulas import utils
 
@@ -17,7 +18,6 @@ def test_rand_ticker():
     ticker = utils.rand_ticker(0)
     assert isinstance(ticker, str)
     assert len(ticker) == 0
-
 
 
 @pytest.mark.parametrize("n", [0, 1, 5, 10, 20, 50, 100, 1000, 10000])
