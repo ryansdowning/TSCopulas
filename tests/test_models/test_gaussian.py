@@ -3,7 +3,7 @@ import datetime
 import numpy as np
 import pandas as pd
 import pytest
-from copulas import multivariate
+from copulas.multivariate import gaussian
 
 from tscopulas import utils
 from tscopulas.models.gaussian import *
@@ -14,11 +14,12 @@ class MockGaussianCopula:
         self.shape = None
         self.columns = None
 
-    def fit(self, fit_data):
-        self.shape = fit_data.shape
-        self.columns = fit_data.columns
+    def fit(self, data):
+        self.shape = data.shape
+        self.columns = data.columns
+        return
 
-    def sample(self, num_samples, conditions=None):
+    def sample(self, num_samples, conditions):
         samples = np.arange(self.shape[1] * num_samples).reshape(num_samples, self.shape[1])
         return pd.DataFrame(samples, columns=self.columns)
 
@@ -34,24 +35,23 @@ def data():
 
 
 @pytest.mark.parametrize("shape,max_lag", [((10, 10), 5), ((100, 10), 10), ((1000, 10), 10), ((1000, 100), 10)])
-def test_gaussian_init(shape, max_lag):
+def test_gaussian_init(monkeypatch, shape, max_lag):
     data = pd.DataFrame(np.random.random(shape))
-    gaussian = Gaussian(data, max_lag)
+    gauss = Gaussian(max_lag)
+    assert gauss.max_lag == max_lag
 
-    assert gaussian.max_lag == max_lag
-    pd.testing.assert_frame_equal(gaussian.data, data)
-    assert gaussian.transform_data.shape == (data.shape[0], data.shape[1] * max_lag + data.shape[1])
+    gauss.model = MockGaussianCopula()
+    gauss.fit(data)
+    assert gauss._transform_data.shape == (data.shape[0], data.shape[1] * max_lag + data.shape[1])
 
 
 def test_gaussian_fit(monkeypatch, data):
     monkeypatch.setattr(multivariate, "GaussianMultivariate", MockGaussianCopula)
 
-    gaussian = Gaussian(data, 10)
-    assert gaussian._is_fit is False
-    gaussian.fit()
-    assert gaussian._is_fit is True
-    gaussian.fit()
-    assert gaussian._is_fit is True
+    gauss = Gaussian(10)
+    assert gauss._transform_data is None
+    gauss.fit(data)
+    assert isinstance(gauss._transform_data, pd.DataFrame)
 
 
 @pytest.mark.parametrize("num_samples", [1, 5, 10, 100])
@@ -59,23 +59,25 @@ def test_gaussian_fit(monkeypatch, data):
 def test_gaussian_sample(monkeypatch, data, num_samples, cond_lag):
     monkeypatch.setattr(multivariate, "GaussianMultivariate", MockGaussianCopula)
 
-    gaussian = Gaussian(data, 10)
+    gauss = Gaussian(10)
     cond_col = str(data.columns[0])
 
     # Cannot sample before fitting
     with pytest.raises(ValueError):
-        gaussian.sample(num_samples, cond_col, cond_lag)
+        gauss.sample(num_samples, cond_col, cond_lag)
 
+    gauss.fit(data)
     # Invalid column name
     with pytest.raises(ValueError):
-        gaussian.sample(num_samples, "__BAD_COLUMN__", cond_lag)
+        gauss.sample(num_samples, "__BAD_COLUMN__", cond_lag)
 
-    gaussian.fit()
-    samples = gaussian.sample(num_samples=num_samples, cond_col=cond_col, cond_lag=cond_lag)
-    sample_shape = (num_samples, data.shape[1] * 10 + data.shape[1])
+    samples = gauss.sample(num_samples=num_samples, cond_col=cond_col, cond_lag=cond_lag)
+    sample_shape = (num_samples, data.shape[1])
     assert samples.shape == sample_shape
     np.testing.assert_array_equal(
-        samples.values, np.arange(sample_shape[1] * num_samples).reshape(num_samples, -1)
+        samples.values, np.arange(
+            num_samples * (data.shape[1] * 10 + data.shape[1])
+        ).reshape(num_samples, -1)[:, :data.shape[1]]
     )
 
 
@@ -83,20 +85,20 @@ def test_gaussian_sample(monkeypatch, data, num_samples, cond_lag):
 def test_gaussian_series_sample(monkeypatch, data, lag):
     monkeypatch.setattr(multivariate, "GaussianMultivariate", MockGaussianCopula)
 
-    gaussian = Gaussian(data, 10)
+    gauss = Gaussian(10)
     cond_col = str(data.columns[0])
 
     # Cannot sample before fitting
     with pytest.raises(ValueError):
-        gaussian.series_sample(cond_col, lag)
+        gauss.series_sample(cond_col, lag)
 
-    gaussian.fit()
+    gauss.fit(data)
     if lag > 10:
         with pytest.raises(ValueError):
-            gaussian.series_sample(cond_col, lag)
+            gauss.series_sample(cond_col, lag)
     else:
-        samples = gaussian.series_sample(cond_col, lag)
-        sample_shape = (lag, data.shape[1] * 10 + data.shape[1])
+        samples = gauss.series_sample(cond_col, lag)
+        sample_shape = (lag, data.shape[1])
         assert samples.shape == sample_shape
         np.testing.assert_array_equal(
             samples.values, np.tile(np.arange(sample_shape[1]), lag).reshape(lag, -1)
