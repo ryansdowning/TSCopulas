@@ -31,12 +31,12 @@ class Gaussian(BaseModel):
         Returns:
              new sample rows
         """
+        if self._data is None:
+            raise ValueError("Please fit model on data")
+
         conditional = f"{cond_col}_lagged_{cond_lag}"
         if conditional not in self._transform_data:
             raise ValueError("Conditional Column not found in transformed data")
-
-        if self._data is None:
-            raise ValueError("Please fit model on data")
 
         new_sample = self.model.sample(
             num_samples,
