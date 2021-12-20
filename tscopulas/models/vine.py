@@ -16,6 +16,16 @@ class Vine(BaseModel):
         """
         super().__init__(max_lag, **config)
         self.model = multivariate.VineCopula(self._config["vine_type"])
+        self.n_var = None
+
+    def fit(self, data: pd.DataFrame):
+        """
+        Transform data to lagged dataframe and fit Multivariate Gaussian on lagged variables
+
+        Marks the model as fitted
+        """
+        super().fit(data)
+        self.n_var = self._transform_data.shape[1]
 
     def _conditional_sample_row(self, condition):
         """Generate a single sampled row from vine model.
@@ -26,18 +36,18 @@ class Vine(BaseModel):
         Returns:
             numpy.ndarray
         """
-        unis = np.random.uniform(0, 1, self.model.n_var)
+        unis = np.random.uniform(0, 1, self.n_var)
         # select conditional node to start with
         # condition[0] is a numerical value index of which feature column we would like to condition on
         first_ind = condition[0]
         adj = self.model.trees[0].get_adjacent_matrix()
 
-        sampled = np.zeros(self.model.n_var)
+        sampled = np.zeros(self.n_var)
         sampled[first_ind] = condition[1]
 
-        second_ind = np.random.randint(0, self.model.n_var)
+        second_ind = np.random.randint(0, self.n_var)
         while second_ind == first_ind:
-            second_ind = np.random.randint(0, self.model.n_var)
+            second_ind = np.random.randint(0, self.n_var)
 
         explore = [second_ind]
         visited = [first_ind]
@@ -121,8 +131,14 @@ class Vine(BaseModel):
         Returns:
              new sample rows
         """
-        sampled_values = []
+        if self._data is None:
+            raise ValueError("Please fit model on data")
+
         conditional = f"{cond_col}_lagged_{cond_lag}"
+        if conditional not in self._transform_data.columns:
+            raise ValueError("Conditional Column not found in transformed data")
+
+        sampled_values = []
         idx = self._transform_data.columns.get_loc(conditional)
         value = self._transform_data[conditional].iloc[-1]
         i = 0
@@ -148,15 +164,15 @@ class Vine(BaseModel):
             Pandas dataframe of <lag> number of rows where each row represents the sample of all other columns given
             conditioned on the selected column's previous value, rolling
         """
+        if self._data is None:
+            raise ValueError("Please fit model on data")
+
         # Need new fit a new model if on larger lag
         if lag > self.max_lag:
             raise ValueError(
                 f"This model has a max lag of {self.max_lag}. Please create a new model with max lag >= {self.max_lag}"
                 f", i.e. Gaussian(data, max_lag={self.max_lag})"
             )
-
-        if self._data is None:
-            raise ValueError("Please fit model on data")
 
         samples = pd.DataFrame(index=range(1, lag + 1), columns=self._zero_columns)
         for i in range(1, lag + 1):

@@ -66,11 +66,11 @@ def test_gaussian_sample(monkeypatch, data, num_samples, cond_lag):
     with pytest.raises(ValueError):
         gauss.sample(num_samples, cond_col, cond_lag)
 
+    gauss.fit(data)
     # Invalid column name
     with pytest.raises(ValueError):
         gauss.sample(num_samples, "__BAD_COLUMN__", cond_lag)
 
-    gauss.fit(data)
     samples = gauss.sample(num_samples=num_samples, cond_col=cond_col, cond_lag=cond_lag)
     sample_shape = (num_samples, data.shape[1])
     assert samples.shape == sample_shape
