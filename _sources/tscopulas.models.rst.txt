@@ -1,0 +1,37 @@
+tscopulas.models package
+========================
+
+Submodules
+----------
+
+tscopulas.models.base module
+----------------------------
+
+.. automodule:: tscopulas.models.base
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tscopulas.models.gaussian module
+--------------------------------
+
+.. automodule:: tscopulas.models.gaussian
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+tscopulas.models.vine module
+----------------------------
+
+.. automodule:: tscopulas.models.vine
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tscopulas.models
+   :members:
+   :undoc-members:
+   :show-inheritance:

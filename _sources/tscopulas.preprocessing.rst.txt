@@ -1,0 +1,21 @@
+tscopulas.preprocessing package
+===============================
+
+Submodules
+----------
+
+tscopulas.preprocessing.lag\_transform module
+---------------------------------------------
+
+.. automodule:: tscopulas.preprocessing.lag_transform
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tscopulas.preprocessing
+   :members:
+   :undoc-members:
+   :show-inheritance:

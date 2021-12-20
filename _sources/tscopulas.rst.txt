@@ -1,0 +1,30 @@
+tscopulas package
+=================
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   tscopulas.models
+   tscopulas.preprocessing
+
+Submodules
+----------
+
+tscopulas.utils module
+----------------------
+
+.. automodule:: tscopulas.utils
+   :members:
+   :undoc-members:
+   :show-inheritance:
+
+Module contents
+---------------
+
+.. automodule:: tscopulas
+   :members:
+   :undoc-members:
+   :show-inheritance:
